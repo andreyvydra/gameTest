@@ -1,6 +1,16 @@
+import entities.Monster;
+import entities.Player;
+
 public class Main {
     public static void main(String[] args) throws IllegalAccessException {
-        Entity e = new Entity();
-        System.out.println(e);
+
+        Player player = new Player();
+        Monster monster = new Monster();
+        while (player.isAlive() && monster.isAlive()){
+            player.attack(monster);
+            monster.attack(player);
+            System.out.println(player);
+            System.out.println(monster);
+        }
     }
 }

@@ -1,6 +1,6 @@
 package core.exceptions;
 
-import static core.Constants.Entity.MIN_HEALTH_POINTS;
+import static core.Constants.Game.MIN_HEALTH_POINTS;
 
 public class IncorrectHealthException extends IllegalArgumentException {
     public IncorrectHealthException() {
