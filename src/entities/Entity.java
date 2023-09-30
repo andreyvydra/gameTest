@@ -1,12 +1,23 @@
 package entities;
 
+import core.GameMessagesOutput;
 import core.exceptions.*;
 
 import static core.Constants.Entity.*;
 import static core.Constants.Game.*;
 import static java.lang.Math.*;
 
+/**
+ * Класс существа, который определяет общий метод защиты, атаки
+ * для потомков класса. Также определяет конструктор с
+ * обработкой некорректных аргументов
+ *
+ * @see Player
+ * @see Monster
+ * @see core.Constants.Entity
+ */
 public class Entity implements Attacking, Defending {
+    protected String name;
     protected byte attackPoints;
     protected int maxDamagePoints;
     protected int minDamagePoints;
@@ -26,9 +37,11 @@ public class Entity implements Attacking, Defending {
         defensePoints = DEFAULT_DEFENSE_POINTS;
         healthPoints = DEFAULT_HEALTH_POINTS;
         maxHealthPoints = DEFAULT_HEALTH_POINTS;
+        name = Entity.class.getSimpleName();
     }
 
-    public Entity(int minDamagePoints,
+    public Entity(String name,
+                  int minDamagePoints,
                   int maxDamagePoints,
                   byte attackPoints,
                   byte defensePoints,
@@ -55,44 +68,68 @@ public class Entity implements Attacking, Defending {
         this.defensePoints = defensePoints;
         this.healthPoints = healthPoints;
         this.maxHealthPoints = healthPoints;
+        this.name = name;
+    }
+
+    public String getName() {
+        return name;
     }
 
     public boolean isAlive() {
         return isAlive;
     }
 
+
+    /**
+     * Успешность атаки определяется с помощью модификатора атаки,
+     * максимально выброшенного значения на кубике и проходного значения.
+     *
+     * @param somebody - существо, которое будет атаковано
+     */
     @Override
     public void attack(Entity somebody) {
+        if (!isAlive) return;
         int attackModifier = Math.max(attackPoints - somebody.defensePoints + 1, minAttackModifier);
-        boolean isAttacking = false;
+        int dice = 0;
         for (int i = 0; i < attackModifier; i++) {
-            if (random() * MAX_DICE_VALUE >= threshold) {
-                isAttacking = true;
-            }
+            int currentDice = (int) ceil(random() * MAX_DICE_VALUE);
+            dice = Math.max(dice, currentDice);
         }
-        if (isAttacking) {
+        if (dice >= threshold) {
+            GameMessagesOutput.printAttackMessage(this, somebody, dice);
             somebody.defense(this);
+        } else {
+            GameMessagesOutput.printMissMessage(this, somebody, dice);
         }
     }
 
+    /**
+     * Метод обрабатывает урон, нанесённый существу
+     *
+     * @param somebody - кто атаковал
+     */
     @Override
     public void defense(Entity somebody) {
-        long damage = round(random() * (somebody.maxDamagePoints - somebody.minDamagePoints) +
+        int damage = (int) round(random() * (somebody.maxDamagePoints - somebody.minDamagePoints) +
                 somebody.minDamagePoints);
         healthPoints -= damage;
+        GameMessagesOutput.printDefenseMessage(this, somebody, damage);
         if (healthPoints <= 0) {
             lifeCounter--;
             if (lifeCounter < MIN_LIVES_COUNT) {
+                GameMessagesOutput.printDeathMessage(this);
                 isAlive = false;
             } else {
-                healthPoints = (int) ceil(0.3 * maxHealthPoints);
+                int newHp = (int) ceil(0.3 * maxHealthPoints);
+                GameMessagesOutput.printRebornMessage(this, newHp);
+                healthPoints = newHp;
             }
         }
     }
 
     @Override
     public String toString() {
-        return "Существо {" +
+        return name + " {" +
                 "урон=" + minDamagePoints + '-' + maxDamagePoints +
                 ", атака=" + attackPoints +
                 ", защита=" + defensePoints +
